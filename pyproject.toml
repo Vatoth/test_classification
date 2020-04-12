@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "data_mining"
+version = "0.1.0"
+description = ""
+authors = ["Quentin Sonnefraud <quentin.sonnefraud@protonmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+sklearn = "^0.0"
+numpy = "^1.18.2"
+matplotlib = "^3.2.1"
+pandas = "^1.0.3"
+graphviz = "^0.13.2"
+pydotplus = "^2.0.2"
+Ipython = "^7.13.0"
+seaborn = "^0.10.0"
+tqdm = "^4.45.0"
+imblearn = "^0.0"
+
+[tool.poetry.dev-dependencies]
+pylint = "^2.4.4"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
