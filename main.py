@@ -35,6 +35,30 @@ def load_data(dataset_path: str):
     data_frame['class'] = data_frame['class'].astype(str)
     return data_frame
 
+def plot_validation_curve(X, Y, param_name, param_range):
+    train_scores, test_scores = validation_curve(DecisionTreeClassifier(), X, Y, param_range=param_range , param_name=param_name,
+                                             cv=5, 
+                                             scoring="accuracy", 
+                                             n_jobs=-1)
+    train_mean = np.mean(train_scores, axis=1)
+    train_std = np.std(train_scores, axis=1)
+    test_mean = np.mean(test_scores, axis=1)
+    test_std = np.std(test_scores, axis=1)
+    plt.plot(param_range, train_mean, color="darkorange", label="Training score")
+    plt.plot(param_range, test_mean, label="Cross-validation score", color="navy")
+
+    # Plot accurancy bands for training and test sets
+    plt.fill_between(param_range, train_mean - train_std, train_mean + train_std, color="darkorange",  alpha=0.2)
+    plt.fill_between(param_range, test_mean - test_std, test_mean + test_std, color="navy",  alpha=0.2)
+
+    plt.title("Validation Curve With Decision Tree")
+    plt.xlabel(param_name)
+    plt.ylabel("Accuracy Score")
+    plt.tight_layout()
+    plt.legend(loc="best")
+    plt.savefig(param_name + '.png')
+    plt.clf()
+
 def find_best_classifier(x_train, x_test, y_train, y_test):
     """Find best parameters for decision tree
     """
@@ -71,30 +95,7 @@ def find_best_classifier(x_train, x_test, y_train, y_test):
     clf = clf.fit(x_train, y_train)
     return clf
 
-def plot_validation_curve(X, Y):
-    param_range = np.arange(1, 30)
-    param_name='max_depth'
-    train_scores, test_scores = validation_curve(DecisionTreeClassifier(), X, Y, param_range=param_range , param_name=param_name,
-                                             cv=5, 
-                                             scoring="accuracy", 
-                                             n_jobs=-1)
-    train_mean = np.mean(train_scores, axis=1)
-    train_std = np.std(train_scores, axis=1)
-    test_mean = np.mean(test_scores, axis=1)
-    test_std = np.std(test_scores, axis=1)
-    plt.plot(param_range, train_mean, color="darkorange", label="Training score")
-    plt.plot(param_range, test_mean, label="Cross-validation score", color="navy")
 
-    # Plot accurancy bands for training and test sets
-    plt.fill_between(param_range, train_mean - train_std, train_mean + train_std, color="darkorange",  alpha=0.2)
-    plt.fill_between(param_range, test_mean - test_std, test_mean + test_std, color="navy",  alpha=0.2)
-
-    plt.title("Validation Curve With Decision Tree")
-    plt.xlabel(param_name)
-    plt.ylabel("Accuracy Score")
-    plt.tight_layout()
-    plt.legend(loc="best")
-    plt.show()
 def main():
     """Main function
     """
@@ -102,7 +103,11 @@ def main():
     features_cols = [i for i in data_frame.columns.values.tolist() if i not in [
         'class']]
     X, Y = data_frame[features_cols], data_frame['class']
-    plot_validation_curve(X, Y)
+    plot_validation_curve(X, Y, 'max_depth', np.arange(1, 30))
+    plot_validation_curve(X, Y, 'min_samples_split', np.arange(2, 400))
+    plot_validation_curve(X, Y, 'min_samples_leaf', np.arange(2, 200))
+    plot_validation_curve(X, Y, 'max_leaf_nodes', np.arange(2, 300))
+    plot_validation_curve(X, Y, 'min_impurity_decrease', np.arange(0.0005, 1, 0.0005))
     x_train, x_test, y_train, y_test = train_test_split(
         X, Y, test_size=0.20, random_state=42)
     clf = DecisionTreeClassifier(random_state=42)
