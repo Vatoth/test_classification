@@ -3,12 +3,19 @@ import pandas as pd
 from sklearn.metrics import accuracy_score
 
 
-def find_best_parameters(c_parameter_name, c_parameter_values, x_train, x_test, y_train, y_test):
-    
+def find_best_parameters(
+        c_parameter_name,
+        c_parameter_values,
+        x_train,
+        x_test,
+        y_train,
+        y_test):
+
     df = pd.DataFrame(columns=[c_parameter_name, 'accuracy'])
 
     for input_parameter in c_parameter_values:
-        clf = DecisionTreeClassifier(**{'random_state': 42, c_parameter_name: input_parameter})
+        clf = DecisionTreeClassifier(
+            **{'random_state': 42, c_parameter_name: input_parameter})
         clf = clf.fit(x_train, y_train)
         y_pred = clf.predict(x_test)
         acc_score = accuracy_score(y_test, y_pred) * 100
