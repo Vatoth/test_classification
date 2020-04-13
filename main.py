@@ -35,20 +35,7 @@ def balance_class(df):
     frame_new = pd.concat(lst)
     return frame_new
 
-
-def main():
-    """Main function
-    """
-    df = load_data('diabetes.arff')
-    features_cols = [i for i in df.columns.values.tolist() if i not in [
-        'class']]
-    x_train, x_test, y_train, y_test = train_test_split(
-        df[features_cols], df['class'], test_size=0.20, random_state=42)
-    clf = DecisionTreeClassifier(random_state=42)
-    clf = clf.fit(x_train, y_train)
-    y_pred = clf.predict(x_test)
-    acc_score = accuracy_score(y_test, y_pred) * 100
-    print("Accuracy before parameters tunning:", acc_score)
+def find_best_classifier(x_train, x_test, y_train, y_test):
     max_depth, _ = find_best_parameters(
         'max_depth', list(range(1, 30)),
         x_train, x_test, y_train, y_test)
@@ -80,6 +67,23 @@ def main():
         min_samples_split=min_samples_split,
         random_state=42)
     clf = clf.fit(x_train, y_train)
+    return clf
+
+
+def main():
+    """Main function
+    """
+    df = load_data('diabetes.arff')
+    features_cols = [i for i in df.columns.values.tolist() if i not in [
+        'class']]
+    x_train, x_test, y_train, y_test = train_test_split(
+        df[features_cols], df['class'], test_size=0.20, random_state=42)
+    clf = DecisionTreeClassifier(random_state=42)
+    clf = clf.fit(x_train, y_train)
+    y_pred = clf.predict(x_test)
+    acc_score = accuracy_score(y_test, y_pred) * 100
+    print("Accuracy before parameters tunning:", acc_score)
+    clf = find_best_classifier(x_train, x_test, y_train, y_test)
     y_pred = clf.predict(x_test)
     acc_score = accuracy_score(y_test, y_pred) * 100
     print("Accuracy after parameters tunning:", acc_score)
