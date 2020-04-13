@@ -10,7 +10,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from find_best_parameters import find_best_parameters
+from sklearn.model_selection._validation import validation_curve
 
+
+X = None
+Y = None
 
 def plot_balance_class(classes):
     """Plot balance between classes
@@ -67,15 +71,40 @@ def find_best_classifier(x_train, x_test, y_train, y_test):
     clf = clf.fit(x_train, y_train)
     return clf
 
+def plot_validation_curve(X, Y):
+    param_range = np.arange(1, 30)
+    param_name='max_depth'
+    train_scores, test_scores = validation_curve(DecisionTreeClassifier(), X, Y, param_range=param_range , param_name=param_name,
+                                             cv=5, 
+                                             scoring="accuracy", 
+                                             n_jobs=-1)
+    train_mean = np.mean(train_scores, axis=1)
+    train_std = np.std(train_scores, axis=1)
+    test_mean = np.mean(test_scores, axis=1)
+    test_std = np.std(test_scores, axis=1)
+    plt.plot(param_range, train_mean, color="darkorange", label="Training score")
+    plt.plot(param_range, test_mean, label="Cross-validation score", color="navy")
 
+    # Plot accurancy bands for training and test sets
+    plt.fill_between(param_range, train_mean - train_std, train_mean + train_std, color="darkorange",  alpha=0.2)
+    plt.fill_between(param_range, test_mean - test_std, test_mean + test_std, color="navy",  alpha=0.2)
+
+    plt.title("Validation Curve With Decision Tree")
+    plt.xlabel(param_name)
+    plt.ylabel("Accuracy Score")
+    plt.tight_layout()
+    plt.legend(loc="best")
+    plt.show()
 def main():
     """Main function
     """
     data_frame = load_data('diabetes.arff')
     features_cols = [i for i in data_frame.columns.values.tolist() if i not in [
         'class']]
+    X, Y = data_frame[features_cols], data_frame['class']
+    plot_validation_curve(X, Y)
     x_train, x_test, y_train, y_test = train_test_split(
-        data_frame[features_cols], data_frame['class'], test_size=0.20, random_state=42)
+        X, Y, test_size=0.20, random_state=42)
     clf = DecisionTreeClassifier(random_state=42)
     clf = clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
