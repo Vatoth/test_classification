@@ -1,3 +1,6 @@
+"""Main module for practical examination for data mining and knowledge discovery @ kent
+"""
+
 from scipy.io import arff
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
@@ -10,6 +13,8 @@ from find_best_parameters import find_best_parameters
 
 
 def plot_balance_class(classes):
+    """Plot balance between classes
+    """
     unique, counts = np.unique(classes, return_counts=True)
     plt.bar(unique, counts)
     plt.title('Class Frequency')
@@ -22,20 +27,13 @@ def load_data(dataset_path: str):
     """Load data and convert class type to str
     """
     data = arff.loadarff(dataset_path)
-    df = pd.DataFrame(data[0])
-    df['class'] = df['class'].astype(str)
-    return df
-
-
-def balance_class(df):
-    max_size = df['class'].value_counts().max()
-    lst = [df]
-    for class_index, group in df.groupby('class'):
-        lst.append(group.sample(max_size - len(group), replace=True))
-    frame_new = pd.concat(lst)
-    return frame_new
+    data_frame = pd.DataFrame(data[0])
+    data_frame['class'] = data_frame['class'].astype(str)
+    return data_frame
 
 def find_best_classifier(x_train, x_test, y_train, y_test):
+    """Find best parameters for decision tree
+    """
     max_depth, _ = find_best_parameters(
         'max_depth', list(range(1, 30)),
         x_train, x_test, y_train, y_test)
@@ -73,11 +71,11 @@ def find_best_classifier(x_train, x_test, y_train, y_test):
 def main():
     """Main function
     """
-    df = load_data('diabetes.arff')
-    features_cols = [i for i in df.columns.values.tolist() if i not in [
+    data_frame = load_data('diabetes.arff')
+    features_cols = [i for i in data_frame.columns.values.tolist() if i not in [
         'class']]
     x_train, x_test, y_train, y_test = train_test_split(
-        df[features_cols], df['class'], test_size=0.20, random_state=42)
+        data_frame[features_cols], data_frame['class'], test_size=0.20, random_state=42)
     clf = DecisionTreeClassifier(random_state=42)
     clf = clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
