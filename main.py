@@ -144,10 +144,10 @@ def main():
     features_cols = [i for i in data_frame.columns.values.tolist() if i not in [
         'class']]
     X, Y = data_frame[features_cols], data_frame['class']
-    plot_validation_curve(X, Y, 'max_depth', np.arange(1, 15))
-    plot_validation_curve(X, Y, 'min_samples_split', np.arange(2, 100))
-    plot_validation_curve(X, Y, 'min_samples_leaf', np.arange(2, 150))
-    plot_validation_curve(X, Y, 'max_leaf_nodes', np.arange(2, 100))
+    plot_validation_curve(X, Y, 'max_depth', np.arange(1, 30))
+    plot_validation_curve(X, Y, 'min_samples_split', np.arange(2, 200))
+    plot_validation_curve(X, Y, 'min_samples_leaf', np.arange(2, 300))
+    plot_validation_curve(X, Y, 'max_leaf_nodes', np.arange(2, 200))
     plot_validation_curve(
         X, Y, 'min_impurity_decrease', np.arange(
             0.0005, 0.1, 0.0005))
