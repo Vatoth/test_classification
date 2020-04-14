@@ -155,7 +155,6 @@ def main():
     features_cols = [i for i in data_frame.columns.values.tolist() if i not in [
         'class']]
     features_analysis(data_frame)
-    exit(1)
     X, Y = data_frame[features_cols], data_frame['class']
     plot_validation_curve(X, Y, 'max_depth', np.arange(1, 30))
     plot_validation_curve(X, Y, 'min_samples_split', np.arange(2, 200))
