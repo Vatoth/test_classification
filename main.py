@@ -120,9 +120,9 @@ def find_best_classifier(x_train, x_test, y_train, y_test):
 def search_with_grid(x_train, x_test, y_train, y_test):
     param_grid = {
         'criterion': ['gini', 'entropy'],
-        'max_depth': np.arange(1, 15),
-        'min_samples_split': np.arange(2, 50, 5),
-        'min_samples_leaf': np.arange(1, 50, 5),
+        'max_depth': [None] + list(range(1, 15)),
+        'min_samples_split': np.append([2], np.arange(5, 50, 5)),
+        'min_samples_leaf': np.append([2], np.arange(5, 50, 5)),
     }
     print("Commencing grid search")
     grid = GridSearchCV(
@@ -132,7 +132,7 @@ def search_with_grid(x_train, x_test, y_train, y_test):
         n_jobs=-1,
         verbose=1)
     grid.fit(x_train, y_train)
-    clf = DecisionTreeClassifier(**grid.best_params_)
+    clf = DecisionTreeClassifier(**grid.best_params_, random_state=0)
     clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
     acc_score = accuracy_score(y_test, y_pred) * 100
@@ -141,10 +141,7 @@ def search_with_grid(x_train, x_test, y_train, y_test):
             acc_score,
             grid.best_params_,
             grid.best_score_))
-    print(classification_report(y_test, y_pred, target_names=[1, 0]))
-    clf = DecisionTreeClassifier(**grid.best_params_, random_state=0)
-    clf = clf.fit(x_train, y_train)
-
+    return clf
 
 def features_analysis(data_frame):
     tested_positive = data_frame[data_frame['class'] == 1]
