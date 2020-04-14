@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from find_best_parameters import find_best_parameters
 from sklearn.model_selection._validation import validation_curve
 
+
 def plot_balance_class(classes):
     """Plot balance between classes
     """
@@ -111,40 +112,69 @@ def find_best_classifier(x_train, x_test, y_train, y_test):
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes,
         min_samples_split=min_samples_split,
-        random_state=42)
+        random_state=0)
     clf = clf.fit(x_train, y_train)
     return clf
+
 
 def search_with_grid(x_train, x_test, y_train, y_test):
     param_grid = {
         'criterion': ['gini', 'entropy'],
         'max_depth': np.arange(1, 15),
-        'min_samples_split': np.arange(2, 100, 2),
-        'min_samples_leaf': np.arange(2, 150, 5),
-        'max_leaf_nodes': np.arange(2, 100, 5),
-        #'min_impurity_decrease': np.arange(0.0005, 0.003, 0.0005),
+        'min_samples_split': np.arange(2, 50, 5),
+        'min_samples_leaf': np.arange(1, 50, 5),
     }
     print("Commencing grid search")
-    grid = GridSearchCV(DecisionTreeClassifier(), param_grid, cv=5, n_jobs=-1, verbose=1)
+    grid = GridSearchCV(
+        DecisionTreeClassifier(),
+        param_grid,
+        cv=5,
+        n_jobs=-1,
+        verbose=1)
     grid.fit(x_train, y_train)
     clf = DecisionTreeClassifier(**grid.best_params_)
     clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
     acc_score = accuracy_score(y_test, y_pred) * 100
-    print("Accuracy after parameters tunning with grid search:",  acc_score, grid.best_params_, grid.best_score_, grid.best_index_)
+    print(
+        "Accuracy after parameters tunning with grid search: accuracy: {0} | best_params {1} | best_score {2}".format(
+            acc_score,
+            grid.best_params_,
+            grid.best_score_))
     print(classification_report(y_test, y_pred, target_names=[1, 0]))
+    clf = DecisionTreeClassifier(**grid.best_params_, random_state=0)
+    clf = clf.fit(x_train, y_train)
+
 
 def features_analysis(data_frame):
     tested_positive = data_frame[data_frame['class'] == 1]
-    tested_positive.hist(figsize=(15,10))
+    tested_positive.hist(figsize=(15, 10))
     plt.savefig('features_repartition_positive' + '.png')
     plt.clf()
     tested_negative = data_frame[data_frame['class'] == 0]
-    tested_negative.hist(figsize=(15,10))
+    tested_negative.hist(figsize=(15, 10))
     plt.savefig('features_repartition_negative' + '.png')
     plt.clf()
     scatter_matrix(data_frame, figsize=(15, 10))
     plt.savefig('correlation' + '.png')
+    plt.clf()
+    plt.hist(tested_negative['plas'], alpha=0.3)
+    plt.hist(tested_positive['plas'], alpha=0.3)
+    plt.xlabel("value of plas")
+    plt.ylabel("number of subject")
+    plt.savefig('comparaison_plas' + '.png')
+    plt.clf()
+    plt.hist(tested_negative['age'], alpha=0.3)
+    plt.hist(tested_positive['age'], alpha=0.3)
+    plt.xlabel("value of age")
+    plt.ylabel("number of subject")
+    plt.savefig('comparaison_age' + '.png')
+    plt.clf()
+    plt.hist(tested_negative['mass'], alpha=0.3)
+    plt.hist(tested_positive['mass'], alpha=0.3)
+    plt.xlabel("value of age")
+    plt.ylabel("number of subject")
+    plt.savefig('comparaison_mass' + '.png')
     plt.clf()
 
 
@@ -164,18 +194,28 @@ def main():
         X, Y, 'min_impurity_decrease', np.arange(
             0.0005, 0.1, 0.0005))
     x_train, x_test, y_train, y_test = train_test_split(
-        X, Y, test_size=0.25, random_state=42)
-    clf = DecisionTreeClassifier(random_state=42)
+        X, Y, test_size=0.25, random_state=0)
+    clf = DecisionTreeClassifier(random_state=0)
     clf = clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
     acc_score = accuracy_score(y_test, y_pred) * 100
     print("Accuracy before parameters tunning:", acc_score)
-    #search_with_grid(x_train, x_test, y_train, y_test)
-    clf = find_best_classifier(x_train, x_test, y_train, y_test)
-    clf.fit(x_train, y_train)
+
+
+    clf = search_with_grid(x_train, x_test, y_train, y_test)
     y_pred = clf.predict(x_test)
     acc_score = accuracy_score(y_test, y_pred) * 100
-    print("Accuracy after parameters tunning:", acc_score)
+    print(features_cols)
+    print(list(clf.feature_importances_))
+    print("Accuracy after parameters tunning with search grid:", acc_score)
+
+
+    clf = find_best_classifier(x_train, x_test, y_train, y_test)
+    y_pred = clf.predict(x_test)
+    acc_score = accuracy_score(y_test, y_pred) * 100
+    print(features_cols)
+    print(list(clf.feature_importances_))
+    print("Accuracy after parameters tunning with find best classifier:", acc_score)
 
 
 if __name__ == "__main__":

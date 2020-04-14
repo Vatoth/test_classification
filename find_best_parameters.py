@@ -19,7 +19,7 @@ def find_best_parameters(
     data_frame = pd.DataFrame(columns=[parameter_name, 'accuracy'])
     for parameter_value in parameter_values:
         clf = DecisionTreeClassifier(
-            **{'random_state': 42, parameter_name: parameter_value})
+            **{'random_state': 0, parameter_name: parameter_value})
         clf = clf.fit(x_train, y_train)
         y_pred = clf.predict(x_test)
         acc_score = accuracy_score(y_test, y_pred) * 100
