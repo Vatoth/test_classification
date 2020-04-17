@@ -2,16 +2,18 @@
 """
 
 from scipy.io import arff
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.tree import DecisionTreeClassifier, export_graphviz
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 from sklearn.metrics import accuracy_score, classification_report
+from sklearn.model_selection._validation import validation_curve
+from sklearn.utils import resample
 from pandas.plotting import scatter_matrix
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import pydotplus
 
 from find_best_parameters import find_best_parameters
-from sklearn.model_selection._validation import validation_curve
 
 
 def plot_balance_class(classes):
@@ -98,12 +100,12 @@ def find_best_classifier(x_train, x_test, y_train, y_test):
     min_samples_leaf = int(min_samples_leaf)
     print("Best sample leaf: ", min_samples_leaf)
     max_leaf_nodes, _ = find_best_parameters(
-        'max_leaf_nodes', list(range(2, 300)),
+        'max_leaf_nodes', list(range(2, 150)),
         x_train, x_test, y_train, y_test)
     max_leaf_nodes = int(max_leaf_nodes)
     print("Best max leaf nodes split: ", max_leaf_nodes)
     min_impurity_decrease, _ = find_best_parameters(
-        'min_impurity_decrease', np.arange(0.0005, 1, 0.0005),
+        'min_impurity_decrease', np.arange(0.0005, 0.1, 0.0005),
         x_train, x_test, y_train, y_test)
     print("Best min impurity decrease: ", min_impurity_decrease)
     clf = DecisionTreeClassifier(
@@ -120,17 +122,18 @@ def find_best_classifier(x_train, x_test, y_train, y_test):
 def search_with_grid(x_train, x_test, y_train, y_test):
     param_grid = {
         'criterion': ['gini', 'entropy'],
-        'max_depth': [None] + list(range(1, 15)),
-        'min_samples_split': np.append([2], np.arange(5, 50, 5)),
-        'min_samples_leaf': np.append([2], np.arange(5, 50, 5)),
+        'max_depth': list(range(1, 10)) + [None],
+        'min_samples_split': np.arange(10, 20),
+        'min_samples_leaf': np.arange(10, 20),
+        'max_leaf_nodes': np.arange(40, 70)
     }
     print("Commencing grid search")
     grid = GridSearchCV(
-        DecisionTreeClassifier(),
+        DecisionTreeClassifier(random_state=0, max_leaf_nodes=58),
         param_grid,
-        cv=5,
         n_jobs=-1,
-        verbose=1)
+        verbose=1,
+        scoring='accuracy')
     grid.fit(x_train, y_train)
     clf = DecisionTreeClassifier(**grid.best_params_, random_state=0)
     clf.fit(x_train, y_train)
@@ -174,6 +177,22 @@ def features_analysis(data_frame):
     plt.savefig('comparaison_mass' + '.png')
     plt.clf()
 
+def vizu_validation_curve(X, Y):
+
+    plot_validation_curve(X, Y, 'max_depth', np.arange(1, 30))
+    plot_validation_curve(X, Y, 'min_samples_split', np.arange(2, 400))
+    plot_validation_curve(X, Y, 'min_samples_leaf', np.arange(2, 125))
+    plot_validation_curve(X, Y, 'max_leaf_nodes', np.arange(2, 200))
+    plot_validation_curve(
+        X, Y, 'min_impurity_decrease', np.arange(
+            0.0005, 0.03, 0.0005))
+
+def write_decision_tree(clf, name, features_names, class_names):
+    dot_data = export_graphviz(clf, out_file=None, 
+                                feature_names=features_names,  
+                                class_names=class_names)
+    graph = pydotplus.graph_from_dot_data(dot_data)  
+    graph.write_png(name + ".png")
 
 def main():
     """Main function
@@ -181,21 +200,16 @@ def main():
     data_frame = load_data('diabetes.arff')
     features_cols = [i for i in data_frame.columns.values.tolist() if i not in [
         'class']]
-    features_analysis(data_frame)
+    #features_analysis(data_frame)
     X, Y = data_frame[features_cols], data_frame['class']
-    plot_validation_curve(X, Y, 'max_depth', np.arange(1, 30))
-    plot_validation_curve(X, Y, 'min_samples_split', np.arange(2, 200))
-    plot_validation_curve(X, Y, 'min_samples_leaf', np.arange(2, 300))
-    plot_validation_curve(X, Y, 'max_leaf_nodes', np.arange(2, 200))
-    plot_validation_curve(
-        X, Y, 'min_impurity_decrease', np.arange(
-            0.0005, 0.1, 0.0005))
+    vizu_validation_curve(X, Y)
     x_train, x_test, y_train, y_test = train_test_split(
         X, Y, test_size=0.25, random_state=0)
     clf = DecisionTreeClassifier(random_state=0)
     clf = clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
     acc_score = accuracy_score(y_test, y_pred) * 100
+    write_decision_tree(clf, "raw", features_cols, ['negative', 'positive'])
     print("Accuracy before parameters tunning:", acc_score)
 
 
@@ -204,6 +218,7 @@ def main():
     acc_score = accuracy_score(y_test, y_pred) * 100
     print(features_cols)
     print(list(clf.feature_importances_))
+    write_decision_tree(clf, "grid", features_cols, ['negative', 'positive'])
     print("Accuracy after parameters tunning with search grid:", acc_score)
 
 
@@ -212,6 +227,7 @@ def main():
     acc_score = accuracy_score(y_test, y_pred) * 100
     print(features_cols)
     print(list(clf.feature_importances_))
+    write_decision_tree(clf, "best_independent", features_cols, ['negative', 'positive'])
     print("Accuracy after parameters tunning with find best classifier:", acc_score)
 
 
